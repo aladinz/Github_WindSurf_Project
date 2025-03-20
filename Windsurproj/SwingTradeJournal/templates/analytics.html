@@ -1,0 +1,498 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - Swing Trading Journal{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Trading Analytics</h1>
+
+<div class="row mb-4">
+    <!-- Performance Over Time -->
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Cumulative Performance</h5>
+            </div>
+            <div class="card-body">
+                <div id="cumulative-performance-chart" style="height: 400px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Performance by Stock -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Performance by Stock</h5>
+            </div>
+            <div class="card-body">
+                <div id="stock-performance-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Trade Type Distribution -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Trade Type Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="trade-type-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Holding Period Distribution -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Holding Period Distribution</h5>
+            </div>
+            <div class="card-body">
+                <div id="holding-period-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Win/Loss by Day of Week -->
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Win/Loss by Day of Week</h5>
+            </div>
+            <div class="card-body">
+                <div id="day-of-week-chart" style="height: 350px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trade Statistics Table -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Detailed Statistics</h5>
+    </div>
+    <div class="card-body">
+        <div class="row" id="detailed-stats">
+            <div class="col-md-4">
+                <h6>Overall Performance</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td>Total Trades</td>
+                            <td id="stat-total-trades">-</td>
+                        </tr>
+                        <tr>
+                            <td>Win Rate</td>
+                            <td id="stat-win-rate">-</td>
+                        </tr>
+                        <tr>
+                            <td>Total P/L</td>
+                            <td id="stat-total-pl">-</td>
+                        </tr>
+                        <tr>
+                            <td>Average P/L per Trade</td>
+                            <td id="stat-avg-pl">-</td>
+                        </tr>
+                        <tr>
+                            <td>Sharpe Ratio</td>
+                            <td id="stat-sharpe-ratio">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div class="mt-3">
+                    <label for="risk-free-rate-input" class="form-label">Risk-Free Rate (%)</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" id="risk-free-rate-input" min="0" max="20" step="0.1" value="0">
+                        <span class="input-group-text">%</span>
+                        <button class="btn btn-outline-primary" type="button" id="update-sharpe-ratio">Update</button>
+                    </div>
+                    <div class="form-text">Adjust the risk-free rate used in the Sharpe Ratio calculation.</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <h6>Trade Metrics</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td>Average Holding Period</td>
+                            <td id="stat-avg-holding">-</td>
+                        </tr>
+                        <tr>
+                            <td>Average Win</td>
+                            <td id="stat-avg-win">-</td>
+                        </tr>
+                        <tr>
+                            <td>Average Loss</td>
+                            <td id="stat-avg-loss">-</td>
+                        </tr>
+                        <tr>
+                            <td>Win/Loss Ratio</td>
+                            <td id="stat-win-loss-ratio">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-md-4">
+                <h6>Best & Worst</h6>
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <td>Best Trade</td>
+                            <td id="stat-best-trade">-</td>
+                        </tr>
+                        <tr>
+                            <td>Worst Trade</td>
+                            <td id="stat-worst-trade">-</td>
+                        </tr>
+                        <tr>
+                            <td>Best Stock</td>
+                            <td id="stat-best-stock">-</td>
+                        </tr>
+                        <tr>
+                            <td>Worst Stock</td>
+                            <td id="stat-worst-stock">-</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Fetch all trades data
+        let tradesData = [];
+        let statsData = {};
+        
+        fetch('/api/trades')
+            .then(response => response.json())
+            .then(trades => {
+                tradesData = trades;
+                
+                if (trades.length === 0) {
+                    document.querySelectorAll('.card-body').forEach(el => {
+                        el.innerHTML = '<div class="alert alert-info">No trade data available yet. Add trades to see analytics.</div>';
+                    });
+                    return;
+                }
+                
+                // Process the data for various charts
+                createCumulativePerformanceChart(trades);
+                createStockPerformanceChart(trades);
+                createTradeTypeChart(trades);
+                createHoldingPeriodChart(trades);
+                createDayOfWeekChart(trades);
+                
+                // Fetch stats for detailed statistics
+                return fetch('/api/stats');
+            })
+            .then(response => response ? response.json() : null)
+            .then(stats => {
+                if (stats) {
+                    statsData = stats;
+                    populateDetailedStats(tradesData, stats);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching trades:', error);
+            });
+    });
+    
+    function createCumulativePerformanceChart(trades) {
+        // Sort trades by exit date
+        trades.sort((a, b) => new Date(a.exit_date) - new Date(b.exit_date));
+        
+        // Calculate cumulative P/L
+        let cumulativePL = 0;
+        const dates = [];
+        const cumulative = [];
+        
+        trades.forEach(trade => {
+            cumulativePL += trade.profit_loss;
+            dates.push(trade.exit_date);
+            cumulative.push(cumulativePL);
+        });
+        
+        // Create the chart
+        Plotly.newPlot('cumulative-performance-chart', [{
+            x: dates,
+            y: cumulative,
+            type: 'scatter',
+            mode: 'lines+markers',
+            line: {
+                color: 'rgba(0, 123, 255, 0.7)',
+                width: 2
+            },
+            marker: {
+                color: cumulative.map(val => val >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)'),
+                size: 8
+            },
+            name: 'Cumulative P/L'
+        }], {
+            margin: { t: 10, r: 10, b: 50, l: 60 },
+            xaxis: { title: 'Date' },
+            yaxis: { title: 'Cumulative Profit/Loss ($)' },
+            hovermode: 'closest'
+        });
+    }
+    
+    function createStockPerformanceChart(trades) {
+        // Group trades by symbol and calculate total P/L
+        const stockPerformance = {};
+        
+        trades.forEach(trade => {
+            if (!stockPerformance[trade.symbol]) {
+                stockPerformance[trade.symbol] = 0;
+            }
+            stockPerformance[trade.symbol] += trade.profit_loss;
+        });
+        
+        // Convert to arrays for plotting
+        const symbols = Object.keys(stockPerformance);
+        const performance = symbols.map(symbol => stockPerformance[symbol]);
+        
+        // Sort by performance
+        const combined = symbols.map((symbol, i) => ({ symbol, performance: performance[i] }));
+        combined.sort((a, b) => b.performance - a.performance);
+        
+        const sortedSymbols = combined.map(item => item.symbol);
+        const sortedPerformance = combined.map(item => item.performance);
+        const colors = sortedPerformance.map(val => val >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)');
+        
+        // Create the chart
+        Plotly.newPlot('stock-performance-chart', [{
+            x: sortedSymbols,
+            y: sortedPerformance,
+            type: 'bar',
+            marker: {
+                color: colors
+            }
+        }], {
+            margin: { t: 10, r: 10, b: 50, l: 60 },
+            xaxis: { title: 'Stock Symbol' },
+            yaxis: { title: 'Total Profit/Loss ($)' }
+        });
+    }
+    
+    function createTradeTypeChart(trades) {
+        // Count trades by type
+        const longTrades = trades.filter(trade => trade.trade_type === 'LONG').length;
+        const shortTrades = trades.filter(trade => trade.trade_type === 'SHORT').length;
+        
+        // Calculate win rates by type
+        const longWins = trades.filter(trade => trade.trade_type === 'LONG' && trade.profit_loss > 0).length;
+        const shortWins = trades.filter(trade => trade.trade_type === 'SHORT' && trade.profit_loss > 0).length;
+        
+        const longWinRate = longTrades > 0 ? (longWins / longTrades) * 100 : 0;
+        const shortWinRate = shortTrades > 0 ? (shortWins / shortTrades) * 100 : 0;
+        
+        // Create the chart
+        Plotly.newPlot('trade-type-chart', [
+            {
+                x: ['LONG', 'SHORT'],
+                y: [longTrades, shortTrades],
+                type: 'bar',
+                name: 'Number of Trades',
+                marker: {
+                    color: 'rgba(0, 123, 255, 0.7)'
+                }
+            },
+            {
+                x: ['LONG', 'SHORT'],
+                y: [longWinRate, shortWinRate],
+                type: 'scatter',
+                mode: 'lines+markers',
+                name: 'Win Rate (%)',
+                yaxis: 'y2',
+                marker: {
+                    color: 'rgba(255, 193, 7, 1)',
+                    size: 10
+                },
+                line: {
+                    color: 'rgba(255, 193, 7, 1)',
+                    width: 3
+                }
+            }
+        ], {
+            margin: { t: 10, r: 60, b: 50, l: 60 },
+            xaxis: { title: 'Trade Type' },
+            yaxis: { title: 'Number of Trades' },
+            yaxis2: {
+                title: 'Win Rate (%)',
+                overlaying: 'y',
+                side: 'right',
+                range: [0, 100]
+            },
+            legend: {
+                orientation: 'h',
+                y: 1.1
+            }
+        });
+    }
+    
+    function createHoldingPeriodChart(trades) {
+        // Group trades by holding period
+        const holdingPeriods = {};
+        
+        trades.forEach(trade => {
+            const period = trade.holding_period;
+            if (!holdingPeriods[period]) {
+                holdingPeriods[period] = 0;
+            }
+            holdingPeriods[period]++;
+        });
+        
+        // Convert to arrays for plotting
+        const periods = Object.keys(holdingPeriods).map(Number).sort((a, b) => a - b);
+        const counts = periods.map(period => holdingPeriods[period]);
+        
+        // Create the chart
+        Plotly.newPlot('holding-period-chart', [{
+            x: periods,
+            y: counts,
+            type: 'bar',
+            marker: {
+                color: 'rgba(23, 162, 184, 0.7)'
+            }
+        }], {
+            margin: { t: 10, r: 10, b: 50, l: 60 },
+            xaxis: { 
+                title: 'Holding Period (Days)',
+                tickmode: 'array',
+                tickvals: periods
+            },
+            yaxis: { title: 'Number of Trades' }
+        });
+    }
+    
+    function createDayOfWeekChart(trades) {
+        // Group trades by day of week
+        const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const winsByDay = Array(7).fill(0);
+        const lossesByDay = Array(7).fill(0);
+        
+        trades.forEach(trade => {
+            const exitDate = new Date(trade.exit_date);
+            const dayOfWeek = exitDate.getDay();
+            
+            if (trade.profit_loss > 0) {
+                winsByDay[dayOfWeek]++;
+            } else {
+                lossesByDay[dayOfWeek]++;
+            }
+        });
+        
+        // Create the chart
+        Plotly.newPlot('day-of-week-chart', [
+            {
+                x: daysOfWeek,
+                y: winsByDay,
+                type: 'bar',
+                name: 'Wins',
+                marker: {
+                    color: 'rgba(40, 167, 69, 0.7)'
+                }
+            },
+            {
+                x: daysOfWeek,
+                y: lossesByDay,
+                type: 'bar',
+                name: 'Losses',
+                marker: {
+                    color: 'rgba(220, 53, 69, 0.7)'
+                }
+            }
+        ], {
+            margin: { t: 10, r: 10, b: 50, l: 60 },
+            xaxis: { title: 'Day of Week' },
+            yaxis: { title: 'Number of Trades' },
+            barmode: 'group'
+        });
+    }
+    
+    function populateDetailedStats(trades, stats) {
+        // Calculate basic stats
+        const totalTrades = trades.length;
+        const winningTrades = trades.filter(trade => trade.profit_loss > 0).length;
+        const losingTrades = trades.filter(trade => trade.profit_loss <= 0).length;
+        const winRate = (winningTrades / totalTrades) * 100;
+        
+        const totalPL = trades.reduce((sum, trade) => sum + trade.profit_loss, 0);
+        const avgPL = totalPL / totalTrades;
+        
+        // Calculate average holding period
+        const totalHoldingDays = trades.reduce((sum, trade) => sum + trade.holding_period, 0);
+        const avgHoldingPeriod = totalHoldingDays / totalTrades;
+        
+        // Calculate average win and loss
+        const winningTradesData = trades.filter(trade => trade.profit_loss > 0);
+        const losingTradesData = trades.filter(trade => trade.profit_loss <= 0);
+        
+        const totalWinnings = winningTradesData.reduce((sum, trade) => sum + trade.profit_loss, 0);
+        const totalLosses = losingTradesData.reduce((sum, trade) => sum + trade.profit_loss, 0);
+        
+        const avgWin = winningTradesData.length > 0 ? totalWinnings / winningTradesData.length : 0;
+        const avgLoss = losingTradesData.length > 0 ? totalLosses / losingTradesData.length : 0;
+            
+        const winLossRatio = avgLoss !== 0 ? Math.abs(avgWin / avgLoss) : 0;
+        
+        // Get Sharpe Ratio from API stats
+        const sharpeRatio = stats.sharpe_ratio;
+        
+        // Find best and worst trades
+        const bestTrade = trades.reduce((best, trade) => 
+            trade.profit_loss > best.profit_loss ? trade : best, trades[0]);
+            
+        const worstTrade = trades.reduce((worst, trade) => 
+            trade.profit_loss < worst.profit_loss ? trade : worst, trades[0]);
+        
+        // Calculate performance by stock
+        const stockPerformance = {};
+        trades.forEach(trade => {
+            if (!stockPerformance[trade.symbol]) {
+                stockPerformance[trade.symbol] = 0;
+            }
+            stockPerformance[trade.symbol] += trade.profit_loss;
+        });
+        
+        // Find best and worst stocks
+        let bestStock = null;
+        let worstStock = null;
+        let bestStockPL = -Infinity;
+        let worstStockPL = Infinity;
+        
+        for (const [symbol, pl] of Object.entries(stockPerformance)) {
+            if (pl > bestStockPL) {
+                bestStockPL = pl;
+                bestStock = symbol;
+            }
+            if (pl < worstStockPL) {
+                worstStockPL = pl;
+                worstStock = symbol;
+            }
+        }
+        
+        // Update the stats in the HTML
+        document.getElementById('stat-total-trades').textContent = totalTrades;
+        document.getElementById('stat-win-rate').textContent = winRate.toFixed(1) + '%';
+        document.getElementById('stat-total-pl').textContent = '$' + totalPL.toFixed(2);
+        document.getElementById('stat-avg-pl').textContent = '$' + avgPL.toFixed(2);
+        document.getElementById('stat-sharpe-ratio').textContent = sharpeRatio.toFixed(2);
+        
+        document.getElementById('stat-avg-holding').textContent = avgHoldingPeriod.toFixed(1) + ' days';
+        document.getElementById('stat-avg-win').textContent = '$' + avgWin.toFixed(2);
+        document.getElementById('stat-avg-loss').textContent = '$' + avgLoss.toFixed(2);
+        document.getElementById('stat-win-loss-ratio').textContent = winLossRatio.toFixed(2);
+        
+        document.getElementById('stat-best-trade').textContent = `${bestTrade.symbol}: $${bestTrade.profit_loss.toFixed(2)}`;
+        document.getElementById('stat-worst-trade').textContent = `${worstTrade.symbol}: $${worstTrade.profit_loss.toFixed(2)}`;
+        document.getElementById('stat-best-stock').textContent = `${bestStock}: $${bestStockPL.toFixed(2)}`;
+        document.getElementById('stat-worst-stock').textContent = `${worstStock}: $${worstStockPL.toFixed(2)}`;
+    }
+</script>
+{% endblock %}

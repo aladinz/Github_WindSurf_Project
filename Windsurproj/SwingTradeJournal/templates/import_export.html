@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+
+{% block title %}Import/Export - Swing Trading Journal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-3">
+            <i class="fas fa-file-import me-2 text-primary"></i>Import/Export
+        </h1>
+        <p class="lead">
+            Import your trades from Excel or CSV files, or export your trading data for backup or analysis in other tools.
+        </p>
+    </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+<div class="row">
+    <!-- Export Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-export me-2"></i>Export Trades
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Export your trades to Excel or CSV format for backup or analysis in other tools.</p>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('export_excel') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-excel me-2"></i>Export to Excel
+                    </a>
+                    <a href="{{ url_for('export_csv') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-file-csv me-2"></i>Export to CSV
+                    </a>
+                </div>
+                
+                <hr>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Tip:</strong> Regular exports are recommended for data backup.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Import Section -->
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-import me-2"></i>Import Trades
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Import trades from Excel or CSV files. Your file must include the following columns:</p>
+                
+                <ul class="small">
+                    <li><strong>symbol</strong>: Stock symbol (e.g., AAPL)</li>
+                    <li><strong>entry_date</strong>: Date of entry (YYYY-MM-DD)</li>
+                    <li><strong>exit_date</strong>: Date of exit (YYYY-MM-DD)</li>
+                    <li><strong>entry_price</strong>: Entry price per share</li>
+                    <li><strong>exit_price</strong>: Exit price per share</li>
+                    <li><strong>position_size</strong>: Number of shares</li>
+                    <li><strong>trade_type</strong>: LONG or SHORT</li>
+                    <li><em>notes</em>: Optional trade notes</li>
+                </ul>
+                
+                <div class="mb-3">
+                    <div class="nav nav-tabs" id="import-tabs" role="tablist">
+                        <button class="nav-link active" id="excel-tab" data-bs-toggle="tab" data-bs-target="#excel-content" type="button" role="tab" aria-controls="excel-content" aria-selected="true">Excel</button>
+                        <button class="nav-link" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv-content" type="button" role="tab" aria-controls="csv-content" aria-selected="false">CSV</button>
+                    </div>
+                    
+                    <div class="tab-content border border-top-0 rounded-bottom p-3" id="import-tabs-content">
+                        <!-- Excel Import -->
+                        <div class="tab-pane fade show active" id="excel-content" role="tabpanel" aria-labelledby="excel-tab">
+                            <form action="{{ url_for('import_excel') }}" method="post" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="excel-file" class="form-label">Select Excel File (.xlsx, .xls)</label>
+                                    <input class="form-control" type="file" id="excel-file" name="file" accept=".xlsx,.xls" required>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-upload me-2"></i>Upload & Import
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                        
+                        <!-- CSV Import -->
+                        <div class="tab-pane fade" id="csv-content" role="tabpanel" aria-labelledby="csv-tab">
+                            <form action="{{ url_for('import_csv') }}" method="post" enctype="multipart/form-data">
+                                <div class="mb-3">
+                                    <label for="csv-file" class="form-label">Select CSV File (.csv)</label>
+                                    <input class="form-control" type="file" id="csv-file" name="file" accept=".csv" required>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-upload me-2"></i>Upload & Import
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Warning:</strong> Importing duplicate trades may result in duplicate entries. Always review your data after import.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Files Section -->
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-download me-2"></i>Download Templates
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Download template files to help you format your data correctly for import:</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-info" id="download-excel-template">
+                                <i class="fas fa-file-excel me-2"></i>Excel Template
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-info" id="download-csv-template">
+                                <i class="fas fa-file-csv me-2"></i>CSV Template
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Generate Excel template
+        document.getElementById('download-excel-template').addEventListener('click', function() {
+            const template = [
+                {
+                    symbol: 'AAPL',
+                    entry_date: '2023-01-01',
+                    exit_date: '2023-01-15',
+                    entry_price: 150.00,
+                    exit_price: 165.00,
+                    position_size: 100,
+                    trade_type: 'LONG',
+                    notes: 'Example trade'
+                }
+            ];
+            
+            // Convert to CSV
+            const headers = Object.keys(template[0]).join(',');
+            const row = Object.values(template[0]).map(val => typeof val === 'string' ? `"${val}"` : val).join(',');
+            const csvContent = headers + '\n' + row;
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'trade_template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        // Generate CSV template (same as Excel for simplicity)
+        document.getElementById('download-csv-template').addEventListener('click', function() {
+            const template = [
+                {
+                    symbol: 'AAPL',
+                    entry_date: '2023-01-01',
+                    exit_date: '2023-01-15',
+                    entry_price: 150.00,
+                    exit_price: 165.00,
+                    position_size: 100,
+                    trade_type: 'LONG',
+                    notes: 'Example trade'
+                }
+            ];
+            
+            // Convert to CSV
+            const headers = Object.keys(template[0]).join(',');
+            const row = Object.values(template[0]).map(val => typeof val === 'string' ? `"${val}"` : val).join(',');
+            const csvContent = headers + '\n' + row;
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'trade_template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+    });
+</script>
+{% endblock %}

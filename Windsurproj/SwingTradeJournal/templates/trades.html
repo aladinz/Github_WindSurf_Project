@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Trades - Swing Trading Journal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Trade History</h1>
+    <a href="{{ url_for('add_trade') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> Add Trade
+    </a>
+</div>
+
+<!-- Filter Form -->
+<div class="card mb-4 shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Filter Trades</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" action="{{ url_for('trades') }}" class="row g-3">
+            <div class="col-md-2">
+                {{ filter_form.symbol.label(class="form-label") }}
+                {{ filter_form.symbol(class="form-control") }}
+            </div>
+            <div class="col-md-2">
+                {{ filter_form.start_date.label(class="form-label") }}
+                {{ filter_form.start_date(class="form-control", type="date") }}
+            </div>
+            <div class="col-md-2">
+                {{ filter_form.end_date.label(class="form-label") }}
+                {{ filter_form.end_date(class="form-control", type="date") }}
+            </div>
+            <div class="col-md-2">
+                {{ filter_form.trade_type.label(class="form-label") }}
+                {{ filter_form.trade_type(class="form-select") }}
+            </div>
+            <div class="col-md-2">
+                {{ filter_form.result.label(class="form-label") }}
+                {{ filter_form.result(class="form-select") }}
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-filter me-1"></i> Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Trades Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">Trades</h5>
+    </div>
+    <div class="card-body">
+        {% if trades %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Entry Date</th>
+                            <th>Exit Date</th>
+                            <th>Entry Price</th>
+                            <th>Exit Price</th>
+                            <th>Size</th>
+                            <th>P/L</th>
+                            <th>P/L %</th>
+                            <th>Days Held</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                            <tr>
+                                <td><strong>{{ trade.symbol }}</strong></td>
+                                <td>{{ trade.trade_type }}</td>
+                                <td>{{ trade.entry_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ trade.exit_date.strftime('%Y-%m-%d') }}</td>
+                                <td>${{ trade.entry_price }}</td>
+                                <td>${{ trade.exit_price }}</td>
+                                <td>{{ trade.position_size }}</td>
+                                <td class="{% if trade.profit_loss > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ trade.profit_loss|round(2) }}
+                                </td>
+                                <td class="{% if trade.profit_loss_percentage > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ trade.profit_loss_percentage|round(2) }}%
+                                </td>
+                                <td>{{ trade.holding_period }}</td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{{ url_for('edit_trade', trade_id=trade.id) }}" class="btn btn-outline-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="confirmDelete({{ trade.id }}, '{{ trade.symbol }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                No trades found matching your criteria. <a href="{{ url_for('add_trade') }}">Add a trade</a>.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the trade for <span id="deleteSymbol"></span>?</p>
+                <p class="text-danger">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="post" action="">
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function confirmDelete(tradeId, symbol) {
+        document.getElementById('deleteSymbol').textContent = symbol;
+        document.getElementById('deleteForm').action = `/trade/${tradeId}/delete`;
+        
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        deleteModal.show();
+    }
+</script>
+{% endblock %}

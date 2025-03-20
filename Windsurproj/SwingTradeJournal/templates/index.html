@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Swing Trading Journal{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Trading Dashboard</h1>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total Trades</h5>
+                <h2 class="display-4">{{ total_trades }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white {% if total_profit_loss >= 0 %}bg-success{% else %}bg-danger{% endif %} h-100">
+            <div class="card-body">
+                <h5 class="card-title">Total P/L</h5>
+                <h2 class="display-4">${{ total_profit_loss|round(2) }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info h-100">
+            <div class="card-body">
+                <h5 class="card-title">Win Rate</h5>
+                <h2 class="display-4">{{ win_rate|round(1) }}%</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-secondary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Avg. Holding Period</h5>
+                <h2 class="display-4">{{ avg_holding_period|round(1) }} days</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Monthly Performance</h5>
+            </div>
+            <div class="card-body">
+                <div id="monthly-performance-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">Win/Loss Ratio</h5>
+            </div>
+            <div class="card-body">
+                <div id="win-loss-chart" style="height: 300px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Trades -->
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Recent Trades</h5>
+        <a href="{{ url_for('trades') }}" class="btn btn-sm btn-primary">View All</a>
+    </div>
+    <div class="card-body">
+        {% if recent_trades %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Type</th>
+                            <th>Entry Date</th>
+                            <th>Exit Date</th>
+                            <th>Entry Price</th>
+                            <th>Exit Price</th>
+                            <th>Size</th>
+                            <th>P/L</th>
+                            <th>P/L %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in recent_trades %}
+                            <tr>
+                                <td><strong>{{ trade.symbol }}</strong></td>
+                                <td>{{ trade.trade_type }}</td>
+                                <td>{{ trade.entry_date.strftime('%Y-%m-%d') }}</td>
+                                <td>{{ trade.exit_date.strftime('%Y-%m-%d') }}</td>
+                                <td>${{ trade.entry_price }}</td>
+                                <td>${{ trade.exit_price }}</td>
+                                <td>{{ trade.position_size }}</td>
+                                <td class="{% if trade.profit_loss > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ trade.profit_loss|round(2) }}
+                                </td>
+                                <td class="{% if trade.profit_loss_percentage > 0 %}text-success{% else %}text-danger{% endif %}">
+                                    {{ trade.profit_loss_percentage|round(2) }}%
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">
+                No trades recorded yet. <a href="{{ url_for('add_trade') }}">Add your first trade</a>.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Fetch data for charts when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                // Create Monthly Performance Chart
+                if (data.monthly_performance && data.monthly_performance.length > 0) {
+                    const months = data.monthly_performance.map(item => item.month);
+                    const profits = data.monthly_performance.map(item => item.profit_loss);
+                    
+                    const colors = profits.map(value => value >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)');
+                    const borderColors = profits.map(value => value >= 0 ? 'rgb(40, 167, 69)' : 'rgb(220, 53, 69)');
+                    
+                    Plotly.newPlot('monthly-performance-chart', [{
+                        x: months,
+                        y: profits,
+                        type: 'bar',
+                        marker: {
+                            color: colors,
+                            line: {
+                                color: borderColors,
+                                width: 1
+                            }
+                        }
+                    }], {
+                        margin: { t: 10, r: 10, b: 30, l: 50 },
+                        xaxis: { title: 'Month' },
+                        yaxis: { title: 'Profit/Loss ($)' }
+                    });
+                } else {
+                    document.getElementById('monthly-performance-chart').innerHTML = 
+                        '<div class="alert alert-info m-3">No performance data available yet.</div>';
+                }
+                
+                // Create Win/Loss Pie Chart
+                if (data.total_trades > 0) {
+                    const winningTrades = Math.round(data.win_rate * data.total_trades / 100);
+                    const losingTrades = data.total_trades - winningTrades;
+                    
+                    Plotly.newPlot('win-loss-chart', [{
+                        values: [winningTrades, losingTrades],
+                        labels: ['Winning Trades', 'Losing Trades'],
+                        type: 'pie',
+                        marker: {
+                            colors: ['rgba(40, 167, 69, 0.7)', 'rgba(220, 53, 69, 0.7)']
+                        },
+                        textinfo: 'label+percent',
+                        insidetextorientation: 'radial'
+                    }], {
+                        margin: { t: 10, r: 10, b: 10, l: 10 }
+                    });
+                } else {
+                    document.getElementById('win-loss-chart').innerHTML = 
+                        '<div class="alert alert-info m-3">No trade data available yet.</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching stats:', error);
+            });
+    });
+</script>
+{% endblock %}

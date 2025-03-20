@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Swing Trading Journal{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-light">
+        <h5 class="card-title mb-0">{{ title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate>
+            {{ form.csrf_token }}
+            
+            <div class="row g-3">
+                <!-- Symbol -->
+                <div class="col-md-4">
+                    {{ form.symbol.label(class="form-label") }}
+                    {{ form.symbol(class="form-control" + (" is-invalid" if form.symbol.errors else "")) }}
+                    {% if form.symbol.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.symbol.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Stock ticker symbol (e.g., AAPL, MSFT)</div>
+                </div>
+                
+                <!-- Trade Type -->
+                <div class="col-md-4">
+                    {{ form.trade_type.label(class="form-label") }}
+                    {{ form.trade_type(class="form-select" + (" is-invalid" if form.trade_type.errors else "")) }}
+                    {% if form.trade_type.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.trade_type.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Position Size -->
+                <div class="col-md-4">
+                    {{ form.position_size.label(class="form-label") }}
+                    {{ form.position_size(class="form-control" + (" is-invalid" if form.position_size.errors else "")) }}
+                    {% if form.position_size.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.position_size.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <div class="form-text">Number of shares</div>
+                </div>
+                
+                <!-- Entry Date -->
+                <div class="col-md-3">
+                    {{ form.entry_date.label(class="form-label") }}
+                    {{ form.entry_date(class="form-control", type="date") }}
+                    {% if form.entry_date.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.entry_date.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Exit Date -->
+                <div class="col-md-3">
+                    {{ form.exit_date.label(class="form-label") }}
+                    {{ form.exit_date(class="form-control", type="date") }}
+                    {% if form.exit_date.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.exit_date.errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Entry Price -->
+                <div class="col-md-3">
+                    {{ form.entry_price.label(class="form-label") }}
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        {{ form.entry_price(class="form-control" + (" is-invalid" if form.entry_price.errors else "")) }}
+                        {% if form.entry_price.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.entry_price.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Exit Price -->
+                <div class="col-md-3">
+                    {{ form.exit_price.label(class="form-label") }}
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        {{ form.exit_price(class="form-control" + (" is-invalid" if form.exit_price.errors else "")) }}
+                        {% if form.exit_price.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.exit_price.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="col-12">
+                    {{ form.notes.label(class="form-label") }}
+                    {{ form.notes(class="form-control", rows=4) }}
+                    <div class="form-text">Optional notes about the trade (strategy, reason for entry/exit, etc.)</div>
+                </div>
+                
+                <!-- Trade Summary Preview -->
+                <div class="col-12 mt-4">
+                    <div class="card bg-light">
+                        <div class="card-header">
+                            <h6 class="mb-0">Trade Summary Preview</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Profit/Loss:</strong> <span id="preview-pl">-</span></p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>P/L Percentage:</strong> <span id="preview-pl-percent">-</span></p>
+                                </div>
+                                <div class="col-md-4">
+                                    <p class="mb-1"><strong>Holding Period:</strong> <span id="preview-holding-period">-</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="col-12 mt-4">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('trades') }}" class="btn btn-secondary">Cancel</a>
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get form elements
+        const entryPriceInput = document.getElementById('entry_price');
+        const exitPriceInput = document.getElementById('exit_price');
+        const positionSizeInput = document.getElementById('position_size');
+        const tradeTypeSelect = document.getElementById('trade_type');
+        const entryDateInput = document.getElementById('entry_date');
+        const exitDateInput = document.getElementById('exit_date');
+        
+        // Get preview elements
+        const previewPL = document.getElementById('preview-pl');
+        const previewPLPercent = document.getElementById('preview-pl-percent');
+        const previewHoldingPeriod = document.getElementById('preview-holding-period');
+        
+        // Function to update the preview
+        function updatePreview() {
+            const entryPrice = parseFloat(entryPriceInput.value);
+            const exitPrice = parseFloat(exitPriceInput.value);
+            const positionSize = parseInt(positionSizeInput.value);
+            const tradeType = tradeTypeSelect.value;
+            const entryDate = new Date(entryDateInput.value);
+            const exitDate = new Date(exitDateInput.value);
+            
+            // Calculate profit/loss
+            let profitLoss = 0;
+            let profitLossPercent = 0;
+            
+            if (!isNaN(entryPrice) && !isNaN(exitPrice) && !isNaN(positionSize) && positionSize > 0) {
+                if (tradeType === 'LONG') {
+                    profitLoss = (exitPrice - entryPrice) * positionSize;
+                    profitLossPercent = ((exitPrice - entryPrice) / entryPrice) * 100;
+                } else if (tradeType === 'SHORT') {
+                    profitLoss = (entryPrice - exitPrice) * positionSize;
+                    profitLossPercent = ((entryPrice - exitPrice) / entryPrice) * 100;
+                }
+                
+                // Update P/L display
+                previewPL.textContent = '$' + profitLoss.toFixed(2);
+                previewPL.className = profitLoss >= 0 ? 'text-success' : 'text-danger';
+                
+                // Update P/L percentage display
+                previewPLPercent.textContent = profitLossPercent.toFixed(2) + '%';
+                previewPLPercent.className = profitLossPercent >= 0 ? 'text-success' : 'text-danger';
+            } else {
+                previewPL.textContent = '-';
+                previewPL.className = '';
+                previewPLPercent.textContent = '-';
+                previewPLPercent.className = '';
+            }
+            
+            // Calculate holding period
+            if (entryDate instanceof Date && !isNaN(entryDate) && 
+                exitDate instanceof Date && !isNaN(exitDate)) {
+                const diffTime = Math.abs(exitDate - entryDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                previewHoldingPeriod.textContent = diffDays + ' day' + (diffDays !== 1 ? 's' : '');
+            } else {
+                previewHoldingPeriod.textContent = '-';
+            }
+        }
+        
+        // Add event listeners to form inputs
+        entryPriceInput.addEventListener('input', updatePreview);
+        exitPriceInput.addEventListener('input', updatePreview);
+        positionSizeInput.addEventListener('input', updatePreview);
+        tradeTypeSelect.addEventListener('change', updatePreview);
+        entryDateInput.addEventListener('change', updatePreview);
+        exitDateInput.addEventListener('change', updatePreview);
+        
+        // Initial update
+        updatePreview();
+    });
+</script>
+{% endblock %}
