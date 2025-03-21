@@ -63,6 +63,14 @@ def create_sample_data():
 
 if __name__ == '__main__':
     with app.app_context():
+        print("Creating database tables...")
         db.create_all()
-        create_sample_data()
-        print("Database initialized with sample data!")
+        
+        # Only create sample data if requested
+        import sys
+        if len(sys.argv) > 1 and sys.argv[1] == '--with-sample-data':
+            print("Creating sample data...")
+            create_sample_data()
+            print("Sample data created successfully!")
+        else:
+            print("Database initialized successfully! Run with --with-sample-data to add sample trades.")
