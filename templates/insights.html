@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block title %}AI Trade Insights - Swing Trading Journal{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-3">
+            <i class="fas fa-robot me-2 text-primary"></i>AI Trade Insights
+        </h1>
+        <p class="lead">
+            Our AI assistant analyzes your trading history to provide personalized insights, recommendations, and potential trade ideas to help improve your trading performance.
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Insights Column -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-lightbulb me-2"></i>Trading Insights
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if insights %}
+                    <ul class="list-group list-group-flush">
+                        {% for insight in insights %}
+                            <li class="list-group-item">
+                                <i class="fas fa-chart-line text-primary me-2"></i>
+                                {{ insight }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Not enough trading data to generate insights. Continue logging your trades to receive personalized insights.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations Column -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>Recommendations
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recommendations %}
+                    <ul class="list-group list-group-flush">
+                        {% for recommendation in recommendations %}
+                            <li class="list-group-item">
+                                <i class="fas fa-arrow-right text-success me-2"></i>
+                                {{ recommendation }}
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Not enough trading data to generate recommendations. Continue logging your trades to receive personalized recommendations.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Potential Trades Section -->
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-search-dollar me-2"></i>Potential Trade Ideas
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if potential_trades %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Symbol</th>
+                                    <th>Type</th>
+                                    <th>Suggested Entry</th>
+                                    <th>Stop Loss</th>
+                                    <th>Target</th>
+                                    <th>Rationale</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for trade in potential_trades %}
+                                    <tr>
+                                        <td><strong>{{ trade.symbol }}</strong></td>
+                                        <td>
+                                            <span class="badge {% if trade.trade_type == 'LONG' %}bg-success{% else %}bg-danger{% endif %}">
+                                                {{ trade.trade_type }}
+                                            </span>
+                                        </td>
+                                        <td>{{ trade.suggested_entry }}</td>
+                                        <td>{{ trade.stop_loss }}</td>
+                                        <td>{{ trade.target }}</td>
+                                        <td>{{ trade.rationale }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Not enough trading data to suggest potential trades. Continue logging your trades to receive personalized trade ideas.
+                    </div>
+                {% endif %}
+                
+                <div class="alert alert-warning mt-3">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Disclaimer:</strong> These trade ideas are generated based on your historical trading patterns and are for educational purposes only. Always conduct your own research before making any investment decisions.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trading Tips Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-secondary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-graduation-cap me-2"></i>Trading Education
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="tradingTips" class="carousel slide" data-bs-ride="carousel">
+                    <div class="carousel-inner">
+                        <div class="carousel-item active">
+                            <div class="p-3">
+                                <h5>The Importance of Risk Management</h5>
+                                <p>Successful traders focus more on how much they could lose rather than how much they could gain. Consider using the 1% rule - never risk more than 1% of your trading capital on a single trade.</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="p-3">
+                                <h5>Trade with the Trend</h5>
+                                <p>One of the most fundamental principles in trading is to align your trades with the overall market trend. Remember the saying: "The trend is your friend."</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="p-3">
+                                <h5>Develop a Trading Plan</h5>
+                                <p>A well-defined trading plan helps remove emotion from your trading decisions. Your plan should include entry and exit criteria, position sizing, and risk management rules.</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="p-3">
+                                <h5>Keep a Trading Journal</h5>
+                                <p>Recording and reviewing your trades is essential for improvement. Document not just what you traded, but why you entered and exited when you did.</p>
+                            </div>
+                        </div>
+                        <div class="carousel-item">
+                            <div class="p-3">
+                                <h5>Manage Your Emotions</h5>
+                                <p>Fear and greed are a trader's worst enemies. Stick to your trading plan and avoid making impulsive decisions based on emotions.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#tradingTips" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#tradingTips" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize the carousel with a 10-second interval
+        var tradingTipsCarousel = new bootstrap.Carousel(document.getElementById('tradingTips'), {
+            interval: 10000
+        });
+        
+        // Update charts for dark mode if needed
+        if (document.body.classList.contains('dark-mode')) {
+            updateChartsForDarkMode();
+        }
+    });
+</script>
+{% endblock %}
