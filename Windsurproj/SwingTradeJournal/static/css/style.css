@@ -1,0 +1,195 @@
+/* Main Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #343a40;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dashboard Cards */
+.card {
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease;
+    margin-bottom: 1.5rem;
+}
+
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    border-top-left-radius: 0.5rem !important;
+    border-top-right-radius: 0.5rem !important;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+}
+
+/* Navbar */
+.navbar {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: background-color 0.3s ease;
+}
+
+.navbar-brand {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Tables */
+.table th {
+    font-weight: 600;
+    background-color: #f8f9fa;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+}
+
+/* Forms */
+.form-control:focus, .form-select:focus {
+    border-color: #80bdff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-label {
+    font-weight: 500;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 0.25rem;
+    font-weight: 500;
+}
+
+.btn-primary {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+/* Profit/Loss Colors */
+.text-profit {
+    color: #28a745;
+}
+
+.text-loss {
+    color: #dc3545;
+}
+
+/* Charts */
+.plotly-graph-div {
+    margin: 0 auto;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .display-4 {
+        font-size: 2.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* Footer */
+footer {
+    border-top: 1px solid #dee2e6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark Mode Toggle */
+.dark-mode-toggle {
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode-toggle i {
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+}
+
+/* Dark Mode Styles */
+body.dark-mode {
+    background-color: #212529;
+    color: #f8f9fa;
+}
+
+body.dark-mode .navbar {
+    background-color: #343a40 !important;
+}
+
+body.dark-mode .card {
+    background-color: #343a40;
+    border-color: #495057;
+}
+
+body.dark-mode .card-header {
+    background-color: #495057 !important;
+    color: #f8f9fa;
+}
+
+body.dark-mode .table {
+    color: #f8f9fa;
+}
+
+body.dark-mode .table th {
+    background-color: #495057;
+    color: #f8f9fa;
+}
+
+body.dark-mode .table td {
+    border-color: #495057;
+}
+
+body.dark-mode .table-hover tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+    background-color: #343a40;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+
+body.dark-mode .input-group-text {
+    background-color: #495057;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+
+body.dark-mode .alert-info {
+    background-color: #0d6efd;
+    color: #fff;
+    border-color: #0d6efd;
+}
+
+body.dark-mode footer {
+    background-color: #343a40 !important;
+    color: #f8f9fa;
+    border-color: #495057;
+}
+
+body.dark-mode .bg-light {
+    background-color: #343a40 !important;
+    color: #f8f9fa;
+}

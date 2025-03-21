@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block title %}Server Error - Swing Trading Journal{% endblock %}
+
+{% block content %}
+<div class="text-center my-5">
+    <h1 class="display-1 text-muted">500</h1>
+    <h2 class="mb-4">Server Error</h2>
+    <p class="lead mb-4">Something went wrong on our end. Please try again later or contact support if the problem persists.</p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-home me-1"></i> Back to Dashboard
+    </a>
+</div>
+{% endblock %}
